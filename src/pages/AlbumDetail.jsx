@@ -47,12 +47,12 @@ export default function AlbumDetail() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#080808]">
+    <div className="relative min-h-screen overflow-hidden bg-[#121212]">
       <div
         className="pointer-events-none absolute left-0 right-0 top-0 h-[65vh]"
         style={{
           background: color
-            ? `linear-gradient(to bottom, rgba(${color}, 0.42) 0%, rgba(${color}, 0.13) 48%, transparent 100%)`
+            ? `linear-gradient(to bottom, rgba(${color}, 0.32) 0%, rgba(${color}, 0.1) 48%, transparent 100%)`
             : 'transparent',
           opacity: colorVisible ? 1 : 0,
           transition: 'opacity 0.7s ease',
@@ -70,38 +70,38 @@ export default function AlbumDetail() {
             src={album.coverUrl}
             alt={album.title}
             viewTransitionName={vtName}
-            className="w-full rounded-[18px]"
+            className="w-full rounded-[12px]"
           />
         </div>
 
-        <div className="flex flex-col px-6 pb-14 pt-7 sm:px-7">
-          <h1 className="text-[30px] font-bold leading-[1.04] tracking-[-0.03em] text-white">
+        <div className="flex flex-col px-6 pb-14 pt-6 sm:px-7">
+          <h1 className="text-[28px] font-bold leading-[1.08] text-white">
             {album.title}
           </h1>
-          <p className="mt-2 text-[15px] text-white/58">{album.artist}</p>
+          <p className="mt-2 text-[15px] text-[#b3b3b3]">{album.artist}</p>
 
           <div className="mt-5 flex items-center gap-3">
             <Dots rating={album.rating} size={7} />
             {album.genre && (
-              <span className="rounded-full border border-white/[0.08] bg-white/[0.035] px-2.5 py-1 text-[11px] font-medium text-white/42">
+              <span className="rounded-full bg-[#1f1f1f] px-2.5 py-1 text-[11px] font-medium text-[#b3b3b3]/58">
                 {album.genre}
               </span>
             )}
           </div>
 
           {album.note ? (
-            <p className="mt-7 whitespace-pre-wrap text-[14px] leading-7 text-white/58">
+            <p className="mt-7 whitespace-pre-wrap text-[14px] leading-6 text-[#b3b3b3]">
               {album.note}
             </p>
           ) : (
-            <p className="mt-7 text-[13px] text-white/28">メモはまだありません。</p>
+            <p className="mt-7 text-[12px] text-white/18">No notes</p>
           )}
 
           <button
             onClick={() => setConfirmingDelete(true)}
-            className="mt-14 self-center rounded-full px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/22 transition hover:bg-white/[0.04] hover:text-[#ff6b6b]"
+            className="mt-12 self-start rounded-full bg-[#181818] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-white/24 shadow-[inset_0_0_0_1px_rgba(124,124,124,0.14)] transition hover:text-[#f3727f]"
           >
-            削除
+            Delete
           </button>
         </div>
       </main>

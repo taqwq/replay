@@ -49,7 +49,7 @@ function AlbumCard({ album, index, cardRef, onColorReady }) {
           className="pointer-events-none absolute -inset-x-3 -top-4 bottom-0 rounded-[28px] blur-[42px]"
           style={{
             background: `radial-gradient(circle at 50% 55%, rgb(${color}), transparent 68%)`,
-            opacity: glowVisible ? 0.24 : 0,
+            opacity: glowVisible ? 0.16 : 0,
             transition: 'opacity 0.7s ease',
           }}
         />
@@ -59,18 +59,18 @@ function AlbumCard({ album, index, cardRef, onColorReady }) {
         src={album.coverUrl}
         alt={album.title}
         viewTransitionName={vtName}
-        className="rounded-[18px] transition duration-300 ease-out group-hover:scale-[1.01] group-active:scale-[0.985]"
+        className="rounded-[12px] transition duration-300 ease-out group-hover:scale-[1.008] group-active:scale-[0.985]"
       />
-      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[18px]">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[12px]">
         <div className="absolute inset-x-0 bottom-0 px-4 pb-3.5 pt-10"
           style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.2) 58%, transparent 100%)' }}
         >
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
-              <p className="truncate text-[16px] font-semibold leading-[1.15] tracking-[-0.01em] text-white">
+              <p className="truncate text-[16px] font-bold leading-[1.15] text-white">
                 {album.title}
               </p>
-              <p className="mt-0.5 truncate text-[12px] text-white/64">{album.artist}</p>
+              <p className="mt-0.5 truncate text-[13px] text-[#b3b3b3]">{album.artist}</p>
             </div>
             <div className="flex-shrink-0 pb-0.5">
               <Dots rating={album.rating} />
@@ -123,20 +123,20 @@ export default function AlbumList() {
       className="min-h-screen transition-[background] duration-700"
       style={{
         background: bgColor
-          ? `radial-gradient(ellipse 120% 50% at 50% 0%, rgba(${bgColor}, 0.065) 0%, #080808 56%)`
-          : '#080808',
+          ? `radial-gradient(ellipse 120% 48% at 50% 0%, rgba(${bgColor}, 0.052) 0%, #121212 58%)`
+          : '#121212',
       }}
     >
       <TopBar
         compact={scrolled}
-        left={<h1 className="font-display text-[21px] font-bold tracking-tight text-white">replay</h1>}
+        left={<h1 className="font-display text-[19px] font-bold text-white">replay</h1>}
         right={<IconButton label="アルバムを追加" onClick={() => goTo(navigate, '/add')}><span className="-mt-0.5 text-[22px] font-light">+</span></IconButton>}
       />
 
-      <main className="mx-auto flex max-w-[520px] flex-col gap-10 px-5 pb-20 pt-4 sm:px-6">
+      <main className="mx-auto flex max-w-[520px] flex-col gap-8 px-5 pb-20 pt-4 sm:px-6">
         {albums.length === 0 ? (
           <div className="flex flex-col items-center gap-5 pt-20 text-center fade-up">
-            <div className="aspect-square w-44 rounded-[18px] border border-white/[0.06] bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.015))] shadow-[0_22px_60px_-34px_rgba(255,255,255,0.25)]" />
+            <div className="aspect-square w-44 rounded-[12px] bg-[#181818] shadow-[inset_0_0_0_1px_rgba(124,124,124,0.18),0_8px_24px_rgba(0,0,0,0.5)]" />
             <div>
               <p className="text-[15px] font-medium text-white/58">最初の1枚を残す</p>
               <p className="mt-1 text-xs text-white/30">検索して、評価とメモだけ足せば完了です</p>

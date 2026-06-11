@@ -1,10 +1,12 @@
+import { useState } from 'react'
+
 export function TopBar({ left, title, right, compact = false }) {
   return (
-    <header className="sticky top-0 z-30 border-b border-white/[0.04] bg-[#080808]/78 backdrop-blur-2xl">
-      <div className={`mx-auto flex max-w-[520px] items-center justify-between px-5 ${compact ? 'py-3' : 'py-4'}`}>
+    <header className="sticky top-0 z-30 bg-[#121212]/86 shadow-[0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-2xl">
+      <div className={`mx-auto flex max-w-[520px] items-center justify-between px-5 transition-[padding] duration-200 ${compact ? 'py-2.5' : 'py-3.5'}`}>
         <div className="flex min-w-0 flex-1 items-center justify-start">{left}</div>
         {title && (
-          <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-[12px] font-medium tracking-[0.02em] text-white/48">
+          <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-[12px] font-semibold text-[#b3b3b3]">
             {title}
           </div>
         )}
@@ -17,7 +19,7 @@ export function TopBar({ left, title, right, compact = false }) {
 export function GhostButton({ children, className = '', ...props }) {
   return (
     <button
-      className={`min-h-9 rounded-full px-3 text-[13px] font-medium text-white/58 transition hover:bg-white/[0.06] hover:text-white active:scale-[0.96] ${className}`}
+      className={`min-h-9 rounded-full px-3.5 text-[12px] font-bold uppercase tracking-[0.12em] text-[#b3b3b3] transition hover:bg-white/[0.06] hover:text-white active:scale-[0.96] ${className}`}
       {...props}
     >
       {children}
@@ -28,7 +30,7 @@ export function GhostButton({ children, className = '', ...props }) {
 export function PrimaryButton({ children, className = '', ...props }) {
   return (
     <button
-      className={`min-h-9 rounded-full bg-white px-4 text-[13px] font-semibold text-black transition hover:bg-white/86 active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40 ${className}`}
+      className={`min-h-9 rounded-full bg-white px-4 text-[12px] font-bold uppercase tracking-[0.12em] text-black shadow-[0_8px_24px_rgba(0,0,0,0.5)] transition hover:bg-[#eeeeee] active:scale-[0.96] disabled:pointer-events-none disabled:bg-[#2a2a2a] disabled:text-white/28 disabled:shadow-none ${className}`}
       {...props}
     >
       {children}
@@ -41,7 +43,7 @@ export function IconButton({ children, label, className = '', ...props }) {
     <button
       aria-label={label}
       title={label}
-      className={`grid h-9 w-9 place-items-center rounded-full border border-white/[0.09] bg-white/[0.035] text-white/68 transition hover:border-white/18 hover:bg-white/[0.07] hover:text-white active:scale-95 ${className}`}
+      className={`grid h-9 w-9 place-items-center rounded-full bg-[#1f1f1f] text-[#b3b3b3] shadow-[inset_0_0_0_1px_rgba(124,124,124,0.28)] transition hover:bg-[#252525] hover:text-white active:scale-95 ${className}`}
       {...props}
     >
       {children}
@@ -50,22 +52,25 @@ export function IconButton({ children, label, className = '', ...props }) {
 }
 
 export function AlbumCover({ src, alt, className = '', imageClassName = '', viewTransitionName }) {
+  const [failedImage, setFailedImage] = useState({ src: null, failed: false })
+  const showImage = src && !(failedImage.src === src && failedImage.failed)
+
   return (
     <div
-      className={`relative aspect-square overflow-hidden bg-white/[0.045] shadow-[0_24px_70px_-28px_rgba(0,0,0,0.96)] ${className}`}
+      className={`relative aspect-square overflow-hidden bg-[#181818] shadow-[0_24px_70px_-28px_rgba(0,0,0,0.96)] ${className}`}
       style={viewTransitionName ? { viewTransitionName } : undefined}
     >
-      {src ? (
+      {showImage ? (
         <img
           src={src}
           alt={alt}
           className={`h-full w-full object-cover ${imageClassName}`}
           loading="lazy"
-          onError={e => { e.currentTarget.style.display = 'none' }}
+          onError={() => setFailedImage({ src, failed: true })}
         />
       ) : (
         <div className="grid h-full w-full place-items-center">
-          <span className="font-display select-none text-[11px] tracking-[0.24em] text-white/[0.11]">NO COVER</span>
+          <span className="select-none text-[10px] font-bold uppercase tracking-[0.18em] text-white/[0.13]">No Cover</span>
         </div>
       )}
     </div>
@@ -76,12 +81,29 @@ export function Field({ label, error, hint, children }) {
   return (
     <div>
       <div className="mb-2 flex items-baseline justify-between gap-4">
-        <label className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/[0.32]">{label}</label>
-        {hint && <span className="text-[11px] text-white/24">{hint}</span>}
+        <label className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#b3b3b3]/55">{label}</label>
+        {hint && <span className="text-[11px] text-[#b3b3b3]/38">{hint}</span>}
       </div>
       {children}
-      {error && <p className="mt-1.5 text-xs text-[#ff6b6b]">{error}</p>}
+      {error && <p className="mt-1.5 text-xs text-[#f3727f]">{error}</p>}
     </div>
+  )
+}
+
+export function FieldGroup({ children, className = '' }) {
+  return (
+    <section className={`flex flex-col gap-5 ${className}`}>
+      {children}
+    </section>
+  )
+}
+
+export function Spinner({ className = '' }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/18 border-t-[#b3b3b3] ${className}`}
+    />
   )
 }
 
@@ -90,7 +112,7 @@ export function ConfirmDialog({ open, title, description, confirmLabel = '削除
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/62 px-5 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div className="w-full max-w-[340px] rounded-[18px] border border-white/[0.09] bg-[#141414] p-4 shadow-2xl fade-up">
+      <div className="w-full max-w-[340px] rounded-[12px] bg-[#181818] p-4 shadow-[0_8px_24px_rgba(0,0,0,0.5)] ring-1 ring-white/[0.07] fade-up">
         <h2 className="text-[15px] font-semibold text-white/92">{title}</h2>
         <p className="mt-2 text-[13px] leading-6 text-white/52">{description}</p>
         <div className="mt-5 flex justify-end gap-2">
