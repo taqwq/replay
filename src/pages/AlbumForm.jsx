@@ -144,11 +144,12 @@ export default function AlbumForm({ mode }) {
                   onClick={() => handleSelect(item)}
                   className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition text-left"
                 >
-                  {item.coverUrl ? (
-                    <img src={item.coverUrl} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-10 h-10 rounded bg-white/10 flex-shrink-0" />
-                  )}
+                  <img
+                    src={item.coverUrl}
+                    alt=""
+                    className="w-10 h-10 rounded object-cover flex-shrink-0 bg-white/10"
+                    onError={e => { e.target.style.display = 'none' }}
+                  />
                   <div className="min-w-0">
                     <p className="text-white text-sm font-medium truncate">{item.title}</p>
                     <p className="text-white/50 text-xs truncate">{item.artist}</p>
