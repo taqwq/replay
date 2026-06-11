@@ -1,24 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getAlbumById, deleteAlbum } from '../storage'
-
-function StarRating({ rating }) {
-  return (
-    <span className="text-yellow-400 text-xl tracking-tight">
-      {'★'.repeat(rating)}{'☆'.repeat(5 - rating)}
-    </span>
-  )
-}
+import { extractColor } from '../utils/color'
+import { Dots } from '../components/Dots'
 
 export default function AlbumDetail() {
   const navigate = useNavigate()
   const { id } = useParams()
   const [album, setAlbum] = useState(null)
+  const [color, setColor] = useState(null)
 
   useEffect(() => {
     const data = getAlbumById(id)
-    if (!data) navigate('/')
-    else setAlbum(data)
+    if (!data) { navigate('/'); return }
+    setAlbum(data)
+    let alive = true
+    extractColor(data.coverUrl).then(c => { if (alive) setColor(c) })
+    return () => { alive = false }
   }, [id])
 
   if (!album) return null
@@ -31,19 +29,19 @@ export default function AlbumDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] relative">
-      {/* ジャケットをブラーして背景に敷く（Spotify風） */}
-      {album.coverUrl && (
+    <div className="min-h-screen bg-[#0a0a0a] relative overflow-hidden">
+      {/* 上半分をアルバムの色で染める（眺める没入感の核） */}
+      {color && (
         <div
-          className="fixed inset-0 bg-cover bg-center opacity-20 blur-3xl scale-110 pointer-events-none"
-          style={{ backgroundImage: `url(${album.coverUrl})` }}
+          className="absolute top-0 left-0 right-0 h-[62vh] pointer-events-none transition-opacity duration-700"
+          style={{
+            background: `linear-gradient(to bottom, rgba(${color}, 0.55) 0%, rgba(${color}, 0.18) 45%, transparent 100%)`,
+          }}
         />
       )}
-      {/* 暗くする上掛け */}
-      <div className="fixed inset-0 bg-gradient-to-b from-black/30 via-[#0a0a0a]/80 to-[#0a0a0a] pointer-events-none" />
 
       {/* ヘッダー */}
-      <div className="relative z-10 sticky top-0 flex items-center justify-between px-4 py-3 bg-transparent">
+      <div className="relative z-10 max-w-[520px] mx-auto flex items-center justify-between px-6 py-5">
         <button
           onClick={() => navigate('/')}
           className="text-white/60 hover:text-white text-sm transition active:scale-95"
@@ -52,16 +50,16 @@ export default function AlbumDetail() {
         </button>
         <button
           onClick={() => navigate(`/album/${id}/edit`)}
-          className="bg-white text-black text-sm font-semibold px-4 py-1.5 rounded-full transition hover:bg-white/85 active:scale-95"
+          className="font-display bg-white text-black text-[13px] font-semibold px-[18px] py-2 rounded-full transition hover:bg-white/85 active:scale-95"
         >
           編集
         </button>
       </div>
 
-      <div className="relative z-10 max-w-[520px] mx-auto">
+      <div className="relative z-10 max-w-[520px] mx-auto fade-up">
         {/* ジャケット */}
-        <div className="px-6 pt-2">
-          <div className="w-full aspect-square rounded-2xl overflow-hidden shadow-2xl">
+        <div className="px-10 pt-3">
+          <div className="w-full aspect-square rounded-[18px] overflow-hidden shadow-[0_26px_60px_-20px_rgba(0,0,0,0.85)] bg-white/5">
             {album.coverUrl ? (
               <img
                 src={album.coverUrl}
@@ -70,45 +68,33 @@ export default function AlbumDetail() {
                 onError={e => { e.target.style.display = 'none' }}
               />
             ) : (
-              <div className="w-full h-full bg-white/5 flex items-center justify-center text-white/10 text-8xl select-none">
-                🎵
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="font-display text-white/10 text-xl tracking-widest select-none">NO COVER</span>
               </div>
             )}
           </div>
         </div>
 
         {/* 情報 */}
-        <div className="px-6 pt-6 pb-10 flex flex-col gap-5">
-          {/* タイトル・アーティスト */}
-          <div>
-            <h1 className="text-white text-2xl font-bold leading-tight tracking-tight">{album.title}</h1>
-            <p className="text-white/50 text-base mt-1 font-medium">{album.artist}</p>
+        <div className="px-7 pt-7 pb-12 flex flex-col">
+          <h1 className="font-display text-white text-[28px] font-bold leading-[1.05] tracking-tight">{album.title}</h1>
+          <p className="text-white/55 text-[15px] mt-1.5">{album.artist}</p>
+
+          <div className="mt-5">
+            <Dots rating={album.rating} size={7} />
           </div>
 
-          {/* 評価・ジャンル */}
-          <div className="flex items-center gap-3">
-            <StarRating rating={album.rating} />
-            {album.genre && (
-              <span className="text-white/40 text-xs border border-white/10 rounded-full px-3 py-1 font-medium">
-                {album.genre}
-              </span>
-            )}
-          </div>
-
-          {/* 感想 */}
           {album.note && (
-            <p className="text-white/60 text-sm leading-relaxed whitespace-pre-wrap">{album.note}</p>
+            <p className="mt-6 text-white/60 text-sm leading-[1.75] whitespace-pre-wrap">{album.note}</p>
           )}
 
-          {/* 削除ボタン */}
-          <div className="pt-4 mt-2 border-t border-white/5">
-            <button
-              onClick={handleDelete}
-              className="w-full py-3 text-red-400 text-sm font-medium border border-red-400/20 rounded-xl transition hover:bg-red-400/5 active:scale-[0.98]"
-            >
-              削除
-            </button>
-          </div>
+          {/* 削除 — 静かに置いておく */}
+          <button
+            onClick={handleDelete}
+            className="mt-12 self-center text-white/25 hover:text-red-400/80 text-xs tracking-wide transition"
+          >
+            このアルバムを削除
+          </button>
         </div>
       </div>
     </div>

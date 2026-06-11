@@ -3,16 +3,18 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { addAlbum, updateAlbum, getAlbumById } from '../storage'
 import { GENRES } from '../constants'
 import { searchAlbums } from '../utils/itunes'
+import { DotRating } from '../components/Dots'
 
-const EMPTY = { title: '', artist: '', coverUrl: '', rating: 5, genre: 'Pop', note: '' }
+const EMPTY = { title: '', artist: '', coverUrl: '', rating: 3, genre: 'Other', note: '' }
 
 export default function AlbumForm({ mode }) {
   const navigate = useNavigate()
   const { id } = useParams()
   const [form, setForm] = useState(EMPTY)
   const [errors, setErrors] = useState({})
+  const [showDetails, setShowDetails] = useState(false)
 
-  // iTunes検索
+  // MusicBrainz検索
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [searching, setSearching] = useState(false)
@@ -22,16 +24,14 @@ export default function AlbumForm({ mode }) {
   useEffect(() => {
     if (mode === 'edit' && id) {
       const album = getAlbumById(id)
-      if (album) setForm(album)
+      if (album) setForm({ ...EMPTY, ...album })
     }
   }, [mode, id])
 
-  // 検索欄の外クリックで候補を閉じる
+  // 検索欄の外をタップしたら候補を閉じる
   useEffect(() => {
     function handleClick(e) {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
-        setResults([])
-      }
+      if (searchRef.current && !searchRef.current.contains(e.target)) setResults([])
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -39,6 +39,7 @@ export default function AlbumForm({ mode }) {
 
   function set(field, value) {
     setForm(f => ({ ...f, [field]: value }))
+    if (errors[field]) setErrors(e => ({ ...e, [field]: null }))
   }
 
   async function handleSearch() {
@@ -58,27 +59,18 @@ export default function AlbumForm({ mode }) {
   }
 
   function handleSelect(item) {
-    setForm(f => ({
-      ...f,
-      title: item.title,
-      artist: item.artist,
-      coverUrl: item.coverUrl,
-      genre: mapGenre(item.genre),
-    }))
+    setForm(f => ({ ...f, title: item.title, artist: item.artist, coverUrl: item.coverUrl }))
+    setErrors({})
     setResults([])
     setQuery('')
   }
 
-  function validate() {
-    const e = {}
-    if (!form.title.trim()) e.title = 'アルバム名は必須です'
-    if (!form.artist.trim()) e.artist = 'アーティスト名は必須です'
-    return e
-  }
-
   function handleSave() {
-    const e = validate()
+    const e = {}
+    if (!form.title.trim()) e.title = 'アルバム名を入れてください'
+    if (!form.artist.trim()) e.artist = 'アーティスト名を入れてください'
     if (Object.keys(e).length > 0) { setErrors(e); return }
+
     if (mode === 'edit') {
       updateAlbum(id, form)
       navigate(`/album/${id}`)
@@ -96,63 +88,58 @@ export default function AlbumForm({ mode }) {
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       {/* ヘッダー */}
-      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5">
-        <button onClick={handleBack} className="text-white/60 hover:text-white text-sm transition active:scale-95">
-          ← 戻る
-        </button>
-        <h2 className="text-white text-sm font-semibold">{mode === 'edit' ? '編集' : '追加'}</h2>
-        <button
-          onClick={handleSave}
-          className="bg-white text-black text-sm font-semibold px-4 py-1.5 rounded-full transition hover:bg-white/85 active:scale-95"
-        >
-          保存
-        </button>
+      <div className="sticky top-0 z-20 bg-[#0a0a0a]/85 backdrop-blur-xl">
+        <div className="max-w-[520px] mx-auto flex items-center justify-between px-6 py-5">
+          <button onClick={handleBack} className="text-white/45 hover:text-white text-sm transition active:scale-95">
+            ← 戻る
+          </button>
+          <button
+            onClick={handleSave}
+            className="font-display bg-white text-black text-[13px] font-semibold px-[18px] py-2 rounded-full transition hover:bg-white/85 active:scale-95"
+          >
+            保存
+          </button>
+        </div>
       </div>
 
-      <div className="max-w-[520px] mx-auto px-4 py-6 flex flex-col gap-5">
+      <div className="max-w-[520px] mx-auto px-7 pb-16 fade-up">
 
-        {/* iTunes検索 */}
-        <div ref={searchRef} className="relative flex flex-col gap-1.5">
-          <label className="text-white/50 text-xs font-medium uppercase tracking-wider">
-            アルバムを検索（iTunes）
-          </label>
-          <div className="flex gap-2">
+        {/* 検索ピル（メインの入力経路） */}
+        <div ref={searchRef} className="relative">
+          <div className="flex items-center gap-2.5 bg-white/[0.06] rounded-full px-5 py-3 focus-within:bg-white/[0.09] transition">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.4">
+              <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
+            </svg>
             <input
               type="text"
               value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              placeholder="アルバム名・アーティスト名で検索..."
-              className="input-base flex-1"
+              placeholder={searching ? '検索中…' : 'アルバムを検索'}
+              className="flex-1 bg-transparent text-white text-[13.5px] outline-none placeholder:text-white/35"
             />
-            <button
-              onClick={handleSearch}
-              disabled={searching}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition disabled:opacity-40 whitespace-nowrap"
-            >
-              {searching ? '...' : '検索'}
-            </button>
           </div>
-          {searchError && <p className="text-white/40 text-xs">{searchError}</p>}
+          {searchError && <p className="text-white/30 text-xs mt-2 px-2">{searchError}</p>}
 
-          {/* 検索結果ドロップダウン */}
+          {/* 検索候補 */}
           {results.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden z-20 shadow-xl max-h-72 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-[#161616] border border-white/[0.07] rounded-2xl overflow-hidden z-30 shadow-2xl max-h-72 overflow-y-auto">
               {results.map((item, i) => (
                 <button
                   key={i}
                   onClick={() => handleSelect(item)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition text-left"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.05] transition text-left fade-up"
+                  style={{ animationDelay: `${Math.min(i * 35, 280)}ms` }}
                 >
                   <img
                     src={item.coverUrl}
                     alt=""
-                    className="w-10 h-10 rounded object-cover flex-shrink-0 bg-white/10"
-                    onError={e => { e.target.style.display = 'none' }}
+                    className="w-9 h-9 rounded-md object-cover flex-shrink-0 bg-white/10"
+                    onError={e => { e.target.style.visibility = 'hidden' }}
                   />
                   <div className="min-w-0">
-                    <p className="text-white text-sm font-medium truncate">{item.title}</p>
-                    <p className="text-white/50 text-xs truncate">{item.artist}</p>
+                    <p className="text-white/90 text-[13px] font-medium truncate">{item.title}</p>
+                    <p className="text-white/40 text-xs truncate">{item.artist}</p>
                   </div>
                 </button>
               ))}
@@ -161,135 +148,124 @@ export default function AlbumForm({ mode }) {
         </div>
 
         {/* ジャケットプレビュー */}
-        <div className="aspect-square w-full rounded-xl overflow-hidden bg-white/5 flex items-center justify-center">
-          {form.coverUrl ? (
-            <img src={form.coverUrl} alt="cover" className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-white/20 text-6xl">🎵</span>
-          )}
+        <div className="flex justify-center mt-7">
+          <div className="w-[200px] aspect-square rounded-[14px] overflow-hidden shadow-[0_18px_44px_-16px_rgba(0,0,0,0.9)] bg-white/[0.04] flex items-center justify-center transition-all duration-500">
+            {form.coverUrl ? (
+              <img src={form.coverUrl} alt="cover" className="w-full h-full object-cover" onError={e => { e.target.style.display = 'none' }} />
+            ) : (
+              <span className="font-display text-white/10 text-[11px] tracking-[0.2em] select-none">NO COVER</span>
+            )}
+          </div>
         </div>
 
-        {/* ジャケットURL */}
-        <Field label="ジャケットURL（任意）">
-          <input
-            type="url"
-            value={form.coverUrl}
-            onChange={e => set('coverUrl', e.target.value)}
-            placeholder="https://..."
-            className="input-base"
-          />
-        </Field>
+        {/* フィールド */}
+        <div className="mt-8 flex flex-col gap-7">
+          <UField label="Album" error={errors.title}>
+            <input
+              type="text"
+              value={form.title}
+              onChange={e => set('title', e.target.value)}
+              className="u-input"
+            />
+          </UField>
 
-        {/* アルバム名 */}
-        <Field label="アルバム名 *" error={errors.title}>
-          <input
-            type="text"
-            value={form.title}
-            onChange={e => set('title', e.target.value)}
-            placeholder="例：DAMN."
-            className="input-base"
-          />
-        </Field>
+          <UField label="Artist" error={errors.artist}>
+            <input
+              type="text"
+              value={form.artist}
+              onChange={e => set('artist', e.target.value)}
+              className="u-input"
+            />
+          </UField>
 
-        {/* アーティスト名 */}
-        <Field label="アーティスト名 *" error={errors.artist}>
-          <input
-            type="text"
-            value={form.artist}
-            onChange={e => set('artist', e.target.value)}
-            placeholder="例：Kendrick Lamar"
-            className="input-base"
-          />
-        </Field>
+          <UField label="Rating">
+            <DotRating value={form.rating} onChange={v => set('rating', v)} />
+          </UField>
 
-        {/* 星評価 */}
-        <Field label="評価">
-          <div className="flex gap-2">
-            {[1, 2, 3, 4, 5].map(n => (
-              <button
-                key={n}
-                onClick={() => set('rating', n)}
-                className={`text-2xl transition ${n <= form.rating ? 'text-yellow-400' : 'text-white/20'}`}
-              >
-                ★
-              </button>
-            ))}
-          </div>
-        </Field>
+          <UField label="Notes">
+            <textarea
+              value={form.note}
+              onChange={e => set('note', e.target.value)}
+              rows={3}
+              placeholder="聴いた感想、思い出など…"
+              className="u-input resize-none"
+            />
+          </UField>
 
-        {/* ジャンル */}
-        <Field label="ジャンル">
-          <select
-            value={form.genre}
-            onChange={e => set('genre', e.target.value)}
-            className="input-base"
+          {/* 折りたたみ：手入力したい人向けの詳細 */}
+          <button
+            onClick={() => setShowDetails(s => !s)}
+            className="self-start text-white/25 hover:text-white/50 text-xs tracking-wide transition"
           >
-            {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
-          </select>
-        </Field>
+            {showDetails ? '− 詳細を閉じる' : '+ 詳細（ジャケットURL・ジャンル）'}
+          </button>
 
-        {/* 感想 */}
-        <Field label="感想（任意）">
-          <textarea
-            value={form.note}
-            onChange={e => set('note', e.target.value)}
-            rows={4}
-            placeholder="聴いた感想、思い出など..."
-            className="input-base resize-none"
-          />
-        </Field>
+          {showDetails && (
+            <div className="flex flex-col gap-7 fade-up">
+              <UField label="Cover URL">
+                <input
+                  type="url"
+                  value={form.coverUrl}
+                  onChange={e => set('coverUrl', e.target.value)}
+                  placeholder="https://…"
+                  className="u-input"
+                />
+              </UField>
+              <UField label="Genre">
+                <select
+                  value={form.genre}
+                  onChange={e => set('genre', e.target.value)}
+                  className="u-input"
+                >
+                  {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </UField>
+            </div>
+          )}
+        </div>
       </div>
 
       <style>{`
-        .input-base {
+        .u-input {
           width: 100%;
-          background: #111111;
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 10px;
-          padding: 11px 14px;
+          background: transparent;
+          border: none;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+          border-radius: 0;
+          padding: 0 0 9px;
           color: #fff;
-          font-size: 14px;
+          font-size: 16px;
           font-family: 'Inter', system-ui, sans-serif;
           outline: none;
-          transition: border-color 0.15s;
+          transition: border-color 0.2s;
         }
-        .input-base:focus {
-          border-color: rgba(255,255,255,0.25);
+        .u-input:focus {
+          border-bottom-color: rgba(255,255,255,0.45);
         }
-        .input-base::placeholder {
-          color: rgba(255,255,255,0.2);
+        .u-input::placeholder {
+          color: rgba(255,255,255,0.22);
         }
-        .input-base option {
-          background: #111111;
+        .u-input option {
+          background: #161616;
+        }
+        select.u-input {
+          appearance: none;
+          cursor: pointer;
         }
       `}</style>
     </div>
   )
 }
 
-function Field({ label, error, children }) {
+// アンダーライン形式のフィールド（極小の大文字ラベル付き）
+function UField({ label, error, children }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-white/50 text-xs font-medium uppercase tracking-wider">{label}</label>
+    <div>
+      <label className="block text-white/[0.28] text-[10px] font-medium tracking-[0.16em] uppercase mb-2">
+        {label}
+      </label>
       {children}
-      {error && <p className="text-red-400 text-xs">{error}</p>}
+      {error && <p className="text-red-400/80 text-xs mt-1.5">{error}</p>}
     </div>
   )
-}
-
-// iTunesのジャンル名をアプリのジャンルリストにマッピング
-function mapGenre(itunesGenre) {
-  const g = itunesGenre?.toLowerCase() ?? ''
-  if (g.includes('pop')) return 'Pop'
-  if (g.includes('rock')) return 'Rock'
-  if (g.includes('hip-hop') || g.includes('hip hop') || g.includes('rap')) return 'Hip-Hop'
-  if (g.includes('r&b') || g.includes('soul')) return 'R&B'
-  if (g.includes('electronic') || g.includes('dance')) return 'Electronic'
-  if (g.includes('jazz')) return 'Jazz'
-  if (g.includes('classical')) return 'Classical'
-  if (g.includes('alternative') || g.includes('indie')) return 'Alternative'
-  if (g.includes('j-pop') || g.includes('japanese')) return 'J-Pop'
-  if (g.includes('k-pop') || g.includes('korean')) return 'K-Pop'
-  if (g.includes('anime') || g.includes('game')) return 'Anime/Game'
-  return 'Other'
 }
