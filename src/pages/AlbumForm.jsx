@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { addAlbum, updateAlbum, getAlbumById } from '../storage'
 import { GENRES } from '../constants'
+import { searchAlbums } from '../utils/itunes'
 
 const EMPTY = { title: '', artist: '', coverUrl: '', rating: 5, genre: 'Pop', note: '' }
 
@@ -11,6 +12,13 @@ export default function AlbumForm({ mode }) {
   const [form, setForm] = useState(EMPTY)
   const [errors, setErrors] = useState({})
 
+  // iTunes検索
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
+  const [searching, setSearching] = useState(false)
+  const [searchError, setSearchError] = useState('')
+  const searchRef = useRef(null)
+
   useEffect(() => {
     if (mode === 'edit' && id) {
       const album = getAlbumById(id)
@@ -18,8 +26,47 @@ export default function AlbumForm({ mode }) {
     }
   }, [mode, id])
 
+  // 検索欄の外クリックで候補を閉じる
+  useEffect(() => {
+    function handleClick(e) {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setResults([])
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
   function set(field, value) {
     setForm(f => ({ ...f, [field]: value }))
+  }
+
+  async function handleSearch() {
+    if (!query.trim()) return
+    setSearching(true)
+    setSearchError('')
+    setResults([])
+    try {
+      const items = await searchAlbums(query)
+      if (items.length === 0) setSearchError('見つかりませんでした')
+      else setResults(items)
+    } catch {
+      setSearchError('検索に失敗しました')
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  function handleSelect(item) {
+    setForm(f => ({
+      ...f,
+      title: item.title,
+      artist: item.artist,
+      coverUrl: item.coverUrl,
+      genre: mapGenre(item.genre),
+    }))
+    setResults([])
+    setQuery('')
   }
 
   function validate() {
@@ -32,7 +79,6 @@ export default function AlbumForm({ mode }) {
   function handleSave() {
     const e = validate()
     if (Object.keys(e).length > 0) { setErrors(e); return }
-
     if (mode === 'edit') {
       updateAlbum(id, form)
       navigate(`/album/${id}`)
@@ -64,6 +110,55 @@ export default function AlbumForm({ mode }) {
       </div>
 
       <div className="max-w-[520px] mx-auto px-4 py-6 flex flex-col gap-5">
+
+        {/* iTunes検索 */}
+        <div ref={searchRef} className="relative flex flex-col gap-1.5">
+          <label className="text-white/50 text-xs font-medium uppercase tracking-wider">
+            アルバムを検索（iTunes）
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSearch()}
+              placeholder="アルバム名・アーティスト名で検索..."
+              className="input-base flex-1"
+            />
+            <button
+              onClick={handleSearch}
+              disabled={searching}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition disabled:opacity-40 whitespace-nowrap"
+            >
+              {searching ? '...' : '検索'}
+            </button>
+          </div>
+          {searchError && <p className="text-white/40 text-xs">{searchError}</p>}
+
+          {/* 検索結果ドロップダウン */}
+          {results.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden z-20 shadow-xl max-h-72 overflow-y-auto">
+              {results.map((item, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSelect(item)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition text-left"
+                >
+                  {item.coverUrl ? (
+                    <img src={item.coverUrl} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded bg-white/10 flex-shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-white text-sm font-medium truncate">{item.title}</p>
+                    <p className="text-white/50 text-xs truncate">{item.artist}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* ジャケットプレビュー */}
         <div className="aspect-square w-full rounded-xl overflow-hidden bg-white/5 flex items-center justify-center">
           {form.coverUrl ? (
@@ -174,4 +269,21 @@ function Field({ label, error, children }) {
       {error && <p className="text-red-400 text-xs">{error}</p>}
     </div>
   )
+}
+
+// iTunesのジャンル名をアプリのジャンルリストにマッピング
+function mapGenre(itunesGenre) {
+  const g = itunesGenre?.toLowerCase() ?? ''
+  if (g.includes('pop')) return 'Pop'
+  if (g.includes('rock')) return 'Rock'
+  if (g.includes('hip-hop') || g.includes('hip hop') || g.includes('rap')) return 'Hip-Hop'
+  if (g.includes('r&b') || g.includes('soul')) return 'R&B'
+  if (g.includes('electronic') || g.includes('dance')) return 'Electronic'
+  if (g.includes('jazz')) return 'Jazz'
+  if (g.includes('classical')) return 'Classical'
+  if (g.includes('alternative') || g.includes('indie')) return 'Alternative'
+  if (g.includes('j-pop') || g.includes('japanese')) return 'J-Pop'
+  if (g.includes('k-pop') || g.includes('korean')) return 'K-Pop'
+  if (g.includes('anime') || g.includes('game')) return 'Anime/Game'
+  return 'Other'
 }
