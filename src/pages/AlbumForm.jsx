@@ -96,14 +96,14 @@ export default function AlbumForm({ mode }) {
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       {/* ヘッダー */}
-      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5">
-        <button onClick={handleBack} className="text-white/60 hover:text-white text-sm transition">
+      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5">
+        <button onClick={handleBack} className="text-white/60 hover:text-white text-sm transition active:scale-95">
           ← 戻る
         </button>
         <h2 className="text-white text-sm font-semibold">{mode === 'edit' ? '編集' : '追加'}</h2>
         <button
           onClick={handleSave}
-          className="bg-white text-black text-sm font-semibold px-4 py-1.5 rounded-full hover:bg-white/90 transition"
+          className="bg-white text-black text-sm font-semibold px-4 py-1.5 rounded-full transition hover:bg-white/85 active:scale-95"
         >
           保存
         </button>
@@ -243,19 +243,24 @@ export default function AlbumForm({ mode }) {
       <style>{`
         .input-base {
           width: 100%;
-          background: #1a1a1a;
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 8px;
-          padding: 10px 12px;
+          background: #111111;
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 10px;
+          padding: 11px 14px;
           color: #fff;
           font-size: 14px;
+          font-family: 'Inter', system-ui, sans-serif;
           outline: none;
+          transition: border-color 0.15s;
         }
         .input-base:focus {
-          border-color: rgba(255,255,255,0.3);
+          border-color: rgba(255,255,255,0.25);
+        }
+        .input-base::placeholder {
+          color: rgba(255,255,255,0.2);
         }
         .input-base option {
-          background: #1a1a1a;
+          background: #111111;
         }
       `}</style>
     </div>
