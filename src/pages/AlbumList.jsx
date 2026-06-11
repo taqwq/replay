@@ -4,6 +4,7 @@ import { flushSync } from 'react-dom'
 import { getAlbums } from '../storage'
 import { extractColor } from '../utils/color'
 import { Dots } from '../components/Dots'
+import { AlbumCover, IconButton, PrimaryButton, TopBar } from '../components/ui'
 
 // View Transitions 対応ナビゲーション
 function goTo(navigate, path) {
@@ -30,7 +31,7 @@ function AlbumCard({ album, index, cardRef, onColorReady }) {
       setTimeout(() => { if (alive) setGlowVisible(true) }, 80)
     })
     return () => { alive = false }
-  }, [album.coverUrl])
+  }, [album.coverUrl, album.id, onColorReady])
 
   // view-transition-name に使う安全な識別子（UUIDのハイフンを除去）
   const vtName = `cover-${album.id.replace(/-/g, '')}`
@@ -40,50 +41,36 @@ function AlbumCard({ album, index, cardRef, onColorReady }) {
       ref={cardRef}
       data-album-id={album.id}
       onClick={() => goTo(navigate, `/album/${album.id}`)}
-      className="relative cursor-pointer group fade-up"
+      className="group relative cursor-pointer fade-up"
       style={{ animationDelay: `${Math.min(index * 70, 420)}ms` }}
     >
-      {/* アンビエントグロー（色抽出後にふわっと点灯） */}
       {color && (
         <div
-          className="absolute -inset-x-2 -top-3 bottom-0 rounded-[36px] blur-[40px] pointer-events-none"
+          className="pointer-events-none absolute -inset-x-3 -top-4 bottom-0 rounded-[28px] blur-[42px]"
           style={{
             background: `radial-gradient(circle at 50% 55%, rgb(${color}), transparent 68%)`,
-            opacity: glowVisible ? 0.38 : 0,
+            opacity: glowVisible ? 0.24 : 0,
             transition: 'opacity 0.7s ease',
           }}
         />
       )}
 
-      {/* ジャケット本体 */}
-      <div
-        className="relative aspect-square w-full rounded-2xl overflow-hidden shadow-[0_20px_50px_-18px_rgba(0,0,0,0.95)] transition-transform duration-300 ease-out group-hover:scale-[1.012] group-active:scale-[0.985] bg-white/5"
-        style={{ viewTransitionName: vtName }}
-      >
-        {album.coverUrl ? (
-          <img
-            src={album.coverUrl}
-            alt={album.title}
-            className="w-full h-full object-cover"
-            loading="lazy"
-            onError={e => { e.target.style.display = 'none' }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="font-display text-white/10 text-sm tracking-widest select-none">NO COVER</span>
-          </div>
-        )}
-
-        {/* ジャケット内下部：薄いスクリム＋テキスト */}
+      <AlbumCover
+        src={album.coverUrl}
+        alt={album.title}
+        viewTransitionName={vtName}
+        className="rounded-[18px] transition duration-300 ease-out group-hover:scale-[1.01] group-active:scale-[0.985]"
+      />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[18px]">
         <div className="absolute inset-x-0 bottom-0 px-4 pb-3.5 pt-10"
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.2) 55%, transparent 100%)' }}
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.2) 58%, transparent 100%)' }}
         >
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-display text-white font-semibold text-[16px] leading-[1.15] tracking-[-0.01em] truncate">
+              <p className="truncate text-[16px] font-semibold leading-[1.15] tracking-[-0.01em] text-white">
                 {album.title}
               </p>
-              <p className="text-white/65 text-[11.5px] mt-0.5 truncate">{album.artist}</p>
+              <p className="mt-0.5 truncate text-[12px] text-white/64">{album.artist}</p>
             </div>
             <div className="flex-shrink-0 pb-0.5">
               <Dots rating={album.rating} />
@@ -97,13 +84,11 @@ function AlbumCard({ album, index, cardRef, onColorReady }) {
 
 export default function AlbumList() {
   const navigate = useNavigate()
-  const [albums, setAlbums] = useState([])
+  const [albums] = useState(() => getAlbums())
   const [bgColor, setBgColor] = useState(null)
   const [scrolled, setScrolled] = useState(false)
   const colorMap = useRef({})
   const cardRefs = useRef({})
-
-  useEffect(() => { setAlbums(getAlbums()) }, [])
 
   const handleColorReady = useCallback((id, color) => {
     colorMap.current[id] = color
@@ -138,41 +123,25 @@ export default function AlbumList() {
       className="min-h-screen transition-[background] duration-700"
       style={{
         background: bgColor
-          ? `radial-gradient(ellipse 120% 50% at 50% 0%, rgba(${bgColor}, 0.07) 0%, #0a0a0a 55%)`
-          : '#0a0a0a',
+          ? `radial-gradient(ellipse 120% 50% at 50% 0%, rgba(${bgColor}, 0.065) 0%, #080808 56%)`
+          : '#080808',
       }}
     >
-      {/* ヘッダー：スクロールで縮む */}
-      <div className={`sticky top-0 z-10 backdrop-blur-xl transition-all duration-300 ${scrolled ? 'bg-[#0a0a0a]/90' : 'bg-transparent'}`}>
-        <div className="max-w-[520px] mx-auto flex items-center justify-between px-6 transition-all duration-300"
-          style={{ paddingTop: scrolled ? 12 : 20, paddingBottom: scrolled ? 12 : 20 }}
-        >
-          <h1
-            className="font-display text-white font-bold tracking-tight transition-all duration-300"
-            style={{ fontSize: scrolled ? 18 : 22 }}
-          >
-            replay
-          </h1>
-          <button
-            onClick={() => goTo(navigate, '/add')}
-            aria-label="アルバムを追加"
-            className="w-8 h-8 rounded-full border border-white/15 text-white/70 text-lg font-light flex items-center justify-center transition duration-200 hover:border-white/40 hover:text-white active:scale-90"
-          >
-            +
-          </button>
-        </div>
-      </div>
+      <TopBar
+        compact={scrolled}
+        left={<h1 className="font-display text-[21px] font-bold tracking-tight text-white">replay</h1>}
+        right={<IconButton label="アルバムを追加" onClick={() => goTo(navigate, '/add')}><span className="-mt-0.5 text-[22px] font-light">+</span></IconButton>}
+      />
 
-      {/* フィード */}
-      <div className="max-w-[520px] mx-auto px-6 pt-1 pb-20 flex flex-col gap-10">
+      <main className="mx-auto flex max-w-[520px] flex-col gap-10 px-5 pb-20 pt-4 sm:px-6">
         {albums.length === 0 ? (
-          <div className="flex flex-col items-center mt-24 gap-6 fade-up">
-            {/* ジャケットの幽霊 */}
-            <div className="w-44 aspect-square rounded-2xl border border-white/[0.05] bg-white/[0.02]" />
-            <div className="flex flex-col items-center gap-1.5 text-center">
-              <p className="font-display text-white/40 text-base">まだ何もありません</p>
-              <p className="text-white/25 text-xs">右上の + から最初の1枚を</p>
+          <div className="flex flex-col items-center gap-5 pt-20 text-center fade-up">
+            <div className="aspect-square w-44 rounded-[18px] border border-white/[0.06] bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.015))] shadow-[0_22px_60px_-34px_rgba(255,255,255,0.25)]" />
+            <div>
+              <p className="text-[15px] font-medium text-white/58">最初の1枚を残す</p>
+              <p className="mt-1 text-xs text-white/30">検索して、評価とメモだけ足せば完了です</p>
             </div>
+            <PrimaryButton onClick={() => goTo(navigate, '/add')}>追加する</PrimaryButton>
           </div>
         ) : (
           albums.map((album, i) => (
@@ -185,7 +154,7 @@ export default function AlbumList() {
             />
           ))
         )}
-      </div>
+      </main>
     </div>
   )
 }

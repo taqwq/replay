@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { getAlbumById, deleteAlbum } from '../storage'
 import { extractColor } from '../utils/color'
 import { Dots } from '../components/Dots'
+import { AlbumCover, ConfirmDialog, GhostButton, PrimaryButton, TopBar } from '../components/ui'
 
 function goTo(navigate, path) {
   if (document.startViewTransition) {
@@ -16,111 +17,102 @@ function goTo(navigate, path) {
 export default function AlbumDetail() {
   const navigate = useNavigate()
   const { id } = useParams()
-  const [album, setAlbum] = useState(null)
+  const [album] = useState(() => getAlbumById(id))
   const [color, setColor] = useState(null)
   const [colorVisible, setColorVisible] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   useEffect(() => {
-    const data = getAlbumById(id)
-    if (!data) { navigate('/'); return }
-    setAlbum(data)
+    if (!album) navigate('/')
+  }, [album, navigate])
+
+  useEffect(() => {
+    if (!album) return
     let alive = true
-    extractColor(data.coverUrl).then(c => {
+    extractColor(album.coverUrl).then(c => {
       if (!alive) return
       setColor(c)
       setTimeout(() => { if (alive) setColorVisible(true) }, 80)
     })
     return () => { alive = false }
-  }, [id])
+  }, [album])
 
   if (!album) return null
 
   const vtName = `cover-${album.id.replace(/-/g, '')}`
 
-  function handleDelete() {
-    if (window.confirm(`「${album.title}」を削除しますか？`)) {
-      deleteAlbum(id)
-      navigate('/')
-    }
+  function handleDeleteConfirm() {
+    deleteAlbum(id)
+    navigate('/')
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] relative overflow-hidden">
-      {/* 上半分をアルバムの色で染める */}
+    <div className="relative min-h-screen overflow-hidden bg-[#080808]">
       <div
-        className="absolute top-0 left-0 right-0 h-[65vh] pointer-events-none"
+        className="pointer-events-none absolute left-0 right-0 top-0 h-[65vh]"
         style={{
           background: color
-            ? `linear-gradient(to bottom, rgba(${color}, 0.52) 0%, rgba(${color}, 0.16) 48%, transparent 100%)`
+            ? `linear-gradient(to bottom, rgba(${color}, 0.42) 0%, rgba(${color}, 0.13) 48%, transparent 100%)`
             : 'transparent',
           opacity: colorVisible ? 1 : 0,
           transition: 'opacity 0.7s ease',
         }}
       />
 
-      {/* ヘッダー */}
-      <div className="relative z-10 max-w-[520px] mx-auto flex items-center justify-between px-6 py-5">
-        <button
-          onClick={() => goTo(navigate, '/')}
-          className="text-white/60 hover:text-white text-sm transition active:scale-95"
-        >
-          ← 戻る
-        </button>
-        <button
-          onClick={() => goTo(navigate, `/album/${id}/edit`)}
-          className="font-display bg-white text-black text-[13px] font-semibold px-[18px] py-2 rounded-full transition hover:bg-white/85 active:scale-95"
-        >
-          編集
-        </button>
-      </div>
+      <TopBar
+        left={<GhostButton onClick={() => goTo(navigate, '/')}>戻る</GhostButton>}
+        right={<PrimaryButton onClick={() => goTo(navigate, `/album/${id}/edit`)}>編集</PrimaryButton>}
+      />
 
-      <div className="relative z-10 max-w-[520px] mx-auto fade-up">
-        {/* ジャケット */}
-        <div className="px-8 pt-2">
-          <div
-            className="w-full aspect-square rounded-[18px] overflow-hidden shadow-[0_28px_64px_-20px_rgba(0,0,0,0.9)] bg-white/5"
-            style={{ viewTransitionName: vtName }}
-          >
-            {album.coverUrl ? (
-              <img
-                src={album.coverUrl}
-                alt={album.title}
-                className="w-full h-full object-cover"
-                onError={e => { e.target.style.display = 'none' }}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="font-display text-white/10 text-sm tracking-widest select-none">NO COVER</span>
-              </div>
-            )}
-          </div>
+      <main className="relative z-10 mx-auto max-w-[520px] fade-up">
+        <div className="px-7 pt-4 sm:px-8">
+          <AlbumCover
+            src={album.coverUrl}
+            alt={album.title}
+            viewTransitionName={vtName}
+            className="w-full rounded-[18px]"
+          />
         </div>
 
-        {/* 情報 */}
-        <div className="px-7 pt-7 pb-14 flex flex-col">
-          <h1 className="font-display text-white text-[28px] font-bold leading-[1.05] tracking-tight">
+        <div className="flex flex-col px-6 pb-14 pt-7 sm:px-7">
+          <h1 className="text-[30px] font-bold leading-[1.04] tracking-[-0.03em] text-white">
             {album.title}
           </h1>
-          <p className="text-white/55 text-[15px] mt-2">{album.artist}</p>
+          <p className="mt-2 text-[15px] text-white/58">{album.artist}</p>
 
-          <div className="mt-5">
+          <div className="mt-5 flex items-center gap-3">
             <Dots rating={album.rating} size={7} />
+            {album.genre && (
+              <span className="rounded-full border border-white/[0.08] bg-white/[0.035] px-2.5 py-1 text-[11px] font-medium text-white/42">
+                {album.genre}
+              </span>
+            )}
           </div>
 
-          {album.note && (
-            <p className="mt-7 text-white/55 text-[13.5px] leading-[1.8] whitespace-pre-wrap">
+          {album.note ? (
+            <p className="mt-7 whitespace-pre-wrap text-[14px] leading-7 text-white/58">
               {album.note}
             </p>
+          ) : (
+            <p className="mt-7 text-[13px] text-white/28">メモはまだありません。</p>
           )}
 
           <button
-            onClick={handleDelete}
-            className="mt-14 self-center text-white/22 hover:text-red-400/70 text-[11px] tracking-widest uppercase transition duration-200"
+            onClick={() => setConfirmingDelete(true)}
+            className="mt-14 self-center rounded-full px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/22 transition hover:bg-white/[0.04] hover:text-[#ff6b6b]"
           >
             削除
           </button>
         </div>
-      </div>
+      </main>
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        title="この記録を削除しますか？"
+        description={`「${album.title}」の評価とメモがこの端末から削除されます。`}
+        onCancel={() => setConfirmingDelete(false)}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }

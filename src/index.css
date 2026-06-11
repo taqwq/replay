@@ -12,10 +12,11 @@
 }
 
 body {
-  background-color: #0a0a0a;
+  background-color: #080808;
   color: #ffffff;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .font-display {
@@ -29,6 +30,36 @@ body {
 
 .fade-up {
   animation: fadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.replay-input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0;
+  background: transparent;
+  color: rgba(255,255,255,0.94);
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+  padding: 0 0 10px;
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+
+.replay-input:focus {
+  border-bottom-color: rgba(255,255,255,0.46);
+}
+
+.replay-input::placeholder {
+  color: rgba(255,255,255,0.24);
+}
+
+.replay-input option {
+  background: #161616;
+}
+
+select.replay-input {
+  cursor: pointer;
 }
 
 /* View Transitions: ページ全体のクロスフェードを切って共有要素だけ動かす */
