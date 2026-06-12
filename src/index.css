@@ -1,5 +1,35 @@
 @import "tailwindcss";
 
+@theme {
+  --color-bg: #060607;
+  --color-surface: #0E0E10;
+  --color-surface-2: #161619;
+  --color-surface-3: #1E1E22;
+  --color-text: #F4F4F5;
+  --color-text-muted: #86868B;
+  --color-text-faint: #52525B;
+  --color-action: #F4F4F5;
+  --color-on-action: #060607;
+  --color-star: #C8973A;
+  --color-danger: #E05454;
+
+  --radius-cover: 0px;
+  --radius-input: 4px;
+  --radius-card: 6px;
+  --radius-sheet: 10px;
+
+  --font-sans: "Geist", "Inter", "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, system-ui, sans-serif;
+
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root {
+  --border: rgba(255, 255, 255, 0.06);
+  --extracted: #888888; /* ジャケット未設定時のフォールバック */
+  --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.6);
+  --shadow-float: 0 12px 40px rgba(0, 0, 0, 0.7);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -14,55 +44,59 @@
 
 body {
   min-height: 100vh;
-  background-color: #121212;
-  color: #ffffff;
-  font-family: 'Inter', 'Helvetica Neue', Arial, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-.font-display {
-  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+/* ジャケットglow：抽出色で発光（詳細・フォーム用。--extractedをroot注入して使う） */
+.cover-glow {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 12px 60px rgba(0, 0, 0, 0.85),
+    0 0 80px color-mix(in srgb, var(--extracted) 25%, transparent);
+  transition: box-shadow 600ms var(--ease-smooth);
 }
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
 .fade-up {
-  animation: fadeUp 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: fadeUp 180ms var(--ease-smooth) backwards;
 }
 
+/* 入力欄：surface-2 / radius 4 / 抽出色フォーカスリング */
 .replay-input {
   width: 100%;
-  border: 0;
-  border-radius: 10px;
-  background: #181818;
-  box-shadow: rgb(18,18,18) 0 1px 0, rgba(124,124,124,0.22) 0 0 0 1px inset;
-  color: rgba(255,255,255,0.94);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
   font: inherit;
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 20px;
   outline: none;
-  padding: 11px 12px;
-  transition: background 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+  padding: 12px;
+  transition: background 200ms var(--ease-smooth), box-shadow 200ms var(--ease-smooth), border-color 200ms var(--ease-smooth);
 }
 
 .replay-input:focus {
-  background: #1f1f1f;
-  box-shadow: rgb(18,18,18) 0 1px 0, rgba(255,255,255,0.42) 0 0 0 1px inset;
+  background: var(--color-surface-3);
+  border-color: transparent;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--extracted) 60%, transparent);
 }
 
 .replay-input::placeholder {
-  color: rgba(255,255,255,0.24);
+  color: var(--color-text-faint);
 }
 
-.replay-input option {
-  background: #161616;
-}
-
-select.replay-input {
-  cursor: pointer;
+.replay-input.input-error {
+  border-color: var(--color-danger);
 }
 
 /* View Transitions: ページ全体のクロスフェードを切って共有要素だけ動かす */

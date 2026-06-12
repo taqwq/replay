@@ -3,8 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { addAlbum, updateAlbum, getAlbumById } from '../storage'
 import { GENRES } from '../constants'
 import { searchAlbums } from '../utils/itunes'
-import { DotRating } from '../components/Dots'
-import { AlbumCover, BackButton, Field, FieldGroup, HeaderAction, IconButton, Spinner, TopBar } from '../components/ui'
+import { extractColor } from '../utils/color'
+import { StarRating } from '../components/Stars'
+import { AlbumCover, BackButton, Field, FieldGroup, HeaderPrimary, IconButton, Spinner, TopBar } from '../components/ui'
 
 const EMPTY = { title: '', artist: '', coverUrl: '', rating: 3, genre: 'Other', note: '' }
 
@@ -16,7 +17,7 @@ export default function AlbumForm({ mode }) {
     return EMPTY
   })
   const [errors, setErrors] = useState({})
-  const [showDetails, setShowDetails] = useState(false)
+  const [showCoverUrl, setShowCoverUrl] = useState(false)
 
   // MusicBrainz検索
   const [query, setQuery] = useState('')
@@ -25,6 +26,20 @@ export default function AlbumForm({ mode }) {
   const [searchError, setSearchError] = useState('')
   const searchRef = useRef(null)
   const canSave = form.title.trim() && form.artist.trim()
+
+  // プレビューのglowとフォーカスリングに抽出色を使う（root注入・離脱時クリア）
+  useEffect(() => {
+    let alive = true
+    if (form.coverUrl) {
+      extractColor(form.coverUrl).then(c => {
+        if (alive && c) document.documentElement.style.setProperty('--extracted', `rgb(${c})`)
+      })
+    }
+    return () => {
+      alive = false
+      document.documentElement.style.removeProperty('--extracted')
+    }
+  }, [form.coverUrl])
 
   // 検索欄の外をタップしたら候補を閉じる
   useEffect(() => {
@@ -84,20 +99,26 @@ export default function AlbumForm({ mode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#121212]">
+    <div className="min-h-screen bg-[#060607]">
       <TopBar
         left={<BackButton onClick={handleBack} />}
-        right={<HeaderAction onClick={handleSave} disabled={!canSave}>Save</HeaderAction>}
+        right={<HeaderPrimary onClick={handleSave} disabled={!canSave}>Save</HeaderPrimary>}
       />
 
-      <main className="px-4 pb-16 pt-5 sm:px-5 fade-up">
+      <main className="px-4 pb-16 pt-6 fade-up">
 
+        {/* 検索ピル：メインの入力経路 */}
         <div ref={searchRef} className="relative">
           {mode === 'edit' && (
-            <p className="mb-2 px-1 text-[11px] font-semibold text-[#b3b3b3]/44">別のアルバムに差し替え</p>
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.06em] text-[#52525B]">
+              別のアルバムに差し替え
+            </p>
           )}
-          <div className="flex min-h-12 items-center gap-3 rounded-full bg-[#1f1f1f] px-4 shadow-[rgb(18,18,18)_0_1px_0,rgba(124,124,124,0.28)_0_0_0_1px_inset] transition focus-within:bg-[#252525] focus-within:shadow-[rgb(18,18,18)_0_1px_0,rgba(255,255,255,0.42)_0_0_0_1px_inset]">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.42)" strokeWidth="2.4" aria-hidden="true">
+          <div
+            className="flex h-12 items-center gap-3 rounded-full bg-[#161619] px-4 transition focus-within:shadow-[0_0_0_2px_color-mix(in_srgb,var(--extracted)_60%,transparent)]"
+            style={{ border: '1px solid var(--border)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#52525B" strokeWidth="2.4" aria-hidden="true">
               <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
             </svg>
             <input
@@ -106,7 +127,7 @@ export default function AlbumForm({ mode }) {
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
               placeholder={searching ? '検索中...' : 'アルバムを検索'}
-              className="min-w-0 flex-1 bg-transparent text-[14px] text-white outline-none placeholder:text-white/34"
+              className="min-w-0 flex-1 bg-transparent text-[14px] text-[#F4F4F5] outline-none placeholder:text-[#52525B]"
             />
             {searching ? (
               <Spinner />
@@ -123,26 +144,27 @@ export default function AlbumForm({ mode }) {
               </IconButton>
             )}
           </div>
-          {searchError && <p className="mt-2 px-2 text-xs text-white/34">{searchError}</p>}
+          {searchError && <p className="mt-2 px-2 text-[13px] text-[#86868B]">{searchError}</p>}
 
+          {/* 検索結果：surface-3の浮遊パネル。サムネも直角スリーブ */}
           {results.length > 0 && (
-            <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-80 overflow-y-auto rounded-[12px] bg-[#181818] p-1 shadow-[0_8px_24px_rgba(0,0,0,0.5)] ring-1 ring-white/[0.07]">
+            <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-80 overflow-y-auto rounded-[10px] bg-[#1E1E22] p-1 shadow-[0_12px_40px_rgba(0,0,0,0.7)] ring-1 ring-white/[0.06]">
               {results.map((item, i) => (
                 <button
                   key={i}
                   onClick={() => handleSelect(item)}
-                  className="flex w-full items-center gap-3 rounded-[13px] px-3 py-2.5 text-left transition hover:bg-white/[0.055] fade-up"
-                  style={{ animationDelay: `${Math.min(i * 35, 280)}ms` }}
+                  className="flex h-14 w-full items-center gap-3 rounded-[6px] px-2 text-left transition hover:bg-white/[0.05] fade-up"
+                  style={{ animationDelay: `${Math.min(i * 30, 240)}ms` }}
                 >
                   <img
                     src={item.coverUrl}
                     alt=""
-                    className="h-10 w-10 flex-shrink-0 rounded-[7px] bg-white/10 object-cover"
+                    className="h-10 w-10 flex-shrink-0 bg-white/10 object-cover"
                     onError={e => { e.target.style.visibility = 'hidden' }}
                   />
                   <div className="min-w-0">
-                    <p className="truncate text-[13px] font-medium text-white/90">{item.title}</p>
-                    <p className="truncate text-xs text-white/42">{item.artist}</p>
+                    <p className="truncate text-[13px] font-medium text-[#F4F4F5]">{item.title}</p>
+                    <p className="truncate text-[11px] font-medium text-[#86868B]">{item.artist}</p>
                   </div>
                 </button>
               ))}
@@ -150,18 +172,24 @@ export default function AlbumForm({ mode }) {
           )}
         </div>
 
-        <div className="mt-7 flex justify-center">
-          <AlbumCover src={form.coverUrl} alt="cover" className="w-[196px] rounded-[12px]" />
+        {/* プレビュー：抽出色glowで「正解」を演出 */}
+        <div className="mt-8 flex justify-center">
+          <AlbumCover
+            src={form.coverUrl}
+            alt="cover"
+            className={`w-48 ${form.coverUrl ? 'cover-glow' : ''}`}
+            style={!form.coverUrl ? { border: '1px solid var(--border)' } : undefined}
+          />
         </div>
 
-        <div className="mt-8 flex flex-col gap-8">
+        <div className="mt-12 flex flex-col gap-12">
           <FieldGroup>
             <Field label="Album" error={errors.title}>
               <input
                 type="text"
                 value={form.title}
                 onChange={e => set('title', e.target.value)}
-                className="replay-input"
+                className={`replay-input ${errors.title ? 'input-error' : ''}`}
               />
             </Field>
 
@@ -170,22 +198,34 @@ export default function AlbumForm({ mode }) {
                 type="text"
                 value={form.artist}
                 onChange={e => set('artist', e.target.value)}
-                className="replay-input"
+                className={`replay-input ${errors.artist ? 'input-error' : ''}`}
               />
             </Field>
 
             <Field label="Rating">
-              <DotRating value={form.rating} onChange={v => set('rating', v)} />
+              <StarRating value={form.rating} onChange={v => set('rating', v)} />
             </Field>
 
             <Field label="Genre">
-              <select
-                value={form.genre}
-                onChange={e => set('genre', e.target.value)}
-                className="replay-input"
-              >
-                {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
-              </select>
+              <div className="flex flex-wrap gap-2">
+                {GENRES.map(g => {
+                  const selected = form.genre === g
+                  return (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => set('genre', g)}
+                      className={`flex h-8 items-center rounded-full px-3 text-[11px] font-medium uppercase tracking-[0.06em] transition active:scale-[0.96] ${
+                        selected
+                          ? 'bg-[#F4F4F5] text-[#060607]'
+                          : 'bg-[#161619] text-[#86868B] hover:text-[#F4F4F5]'
+                      }`}
+                    >
+                      {g}
+                    </button>
+                  )
+                })}
+              </div>
             </Field>
           </FieldGroup>
 
@@ -194,33 +234,35 @@ export default function AlbumForm({ mode }) {
               <textarea
                 value={form.note}
                 onChange={e => set('note', e.target.value)}
-                rows={4}
+                rows={5}
                 placeholder="聴いた感想、思い出など..."
                 className="replay-input resize-none leading-6"
               />
             </Field>
+
+            <div>
+              <button
+                onClick={() => setShowCoverUrl(s => !s)}
+                className="text-[13px] font-medium text-[#52525B] transition hover:text-[#86868B]"
+              >
+                {showCoverUrl ? 'Cover URLを閉じる' : 'Cover URL'}
+              </button>
+
+              {showCoverUrl && (
+                <div className="mt-6 fade-up">
+                  <Field label="Cover URL">
+                    <input
+                      type="url"
+                      value={form.coverUrl}
+                      onChange={e => set('coverUrl', e.target.value)}
+                      placeholder="https://..."
+                      className="replay-input"
+                    />
+                  </Field>
+                </div>
+              )}
+            </div>
           </FieldGroup>
-
-          <button
-            onClick={() => setShowDetails(s => !s)}
-            className="self-start rounded-full px-1 text-xs font-medium text-white/32 transition hover:text-white/58"
-          >
-            {showDetails ? 'Cover URLを閉じる' : 'Cover URL'}
-          </button>
-
-          {showDetails && (
-            <FieldGroup className="fade-up">
-              <Field label="Cover URL">
-                <input
-                  type="url"
-                  value={form.coverUrl}
-                  onChange={e => set('coverUrl', e.target.value)}
-                  placeholder="https://..."
-                  className="replay-input"
-                />
-              </Field>
-            </FieldGroup>
-          )}
         </div>
       </main>
     </div>

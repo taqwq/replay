@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getAlbumById, deleteAlbum } from '../storage'
 import { extractColor } from '../utils/color'
-import { Dots } from '../components/Dots'
+import { Stars } from '../components/Stars'
 import { AlbumCover, BackButton, ConfirmDialog, HeaderAction, TopBar } from '../components/ui'
 
 function goTo(navigate, path) {
@@ -18,23 +18,26 @@ export default function AlbumDetail() {
   const navigate = useNavigate()
   const { id } = useParams()
   const [album] = useState(() => getAlbumById(id))
-  const [color, setColor] = useState(null)
-  const [colorVisible, setColorVisible] = useState(false)
+  const [heroVisible, setHeroVisible] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   useEffect(() => {
     if (!album) navigate('/')
   }, [album, navigate])
 
+  // --extracted をrootに注入。離脱時にクリーンアップ（フォールバック#888に戻る）
   useEffect(() => {
     if (!album) return
     let alive = true
     extractColor(album.coverUrl).then(c => {
-      if (!alive) return
-      setColor(c)
-      setTimeout(() => { if (alive) setColorVisible(true) }, 80)
+      if (!alive || !c) return
+      document.documentElement.style.setProperty('--extracted', `rgb(${c})`)
+      setTimeout(() => { if (alive) setHeroVisible(true) }, 80)
     })
-    return () => { alive = false }
+    return () => {
+      alive = false
+      document.documentElement.style.removeProperty('--extracted')
+    }
   }, [album])
 
   if (!album) return null
@@ -47,57 +50,66 @@ export default function AlbumDetail() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#121212]">
+    <div className="relative min-h-screen overflow-hidden bg-[#060607]">
+      {/* ヒーロー：抽出色が天井から溶けて漆黒に到達する */}
       <div
-        className="pointer-events-none absolute left-0 right-0 top-0 h-[65vh]"
+        className="pointer-events-none absolute left-0 right-0 top-0 h-[60vh]"
         style={{
-          background: color
-            ? `linear-gradient(to bottom, rgba(${color}, 0.32) 0%, rgba(${color}, 0.1) 48%, transparent 100%)`
-            : 'transparent',
-          opacity: colorVisible ? 1 : 0,
-          transition: 'opacity 0.7s ease',
+          background: 'linear-gradient(180deg, color-mix(in srgb, var(--extracted) 20%, #060607) 0%, #060607 55%)',
+          opacity: heroVisible ? 1 : 0,
+          transition: 'opacity 600ms var(--ease-smooth)',
         }}
       />
 
       <TopBar
+        transparent
         left={<BackButton onClick={() => goTo(navigate, '/')} />}
         right={<HeaderAction onClick={() => goTo(navigate, `/album/${id}/edit`)}>Edit</HeaderAction>}
       />
 
       <main className="relative z-10 fade-up">
-        <div className="px-5 pt-4 sm:px-6">
+        {/* ジャケット：一覧と同幅＝View Transitionが純粋な滑走になる */}
+        <div className="px-4 pt-4">
           <AlbumCover
             src={album.coverUrl}
             alt={album.title}
             viewTransitionName={vtName}
-            className="w-full rounded-[12px]"
+            className="w-full cover-glow"
           />
         </div>
 
-        <div className="flex flex-col px-5 pb-14 pt-6 sm:px-6">
-          <h1 className="text-[28px] font-bold leading-[1.08] text-white">
+        <div className="flex flex-col px-4 pb-16 pt-8">
+          <h1 className="text-[36px] font-bold leading-[42px] tracking-[-0.03em] text-[#F4F4F5] [overflow-wrap:anywhere]">
             {album.title}
           </h1>
-          <p className="mt-2 text-[15px] text-[#b3b3b3]">{album.artist}</p>
+          <p className="mt-2 text-[13px] font-medium leading-[18px] text-[#86868B]">
+            {album.artist}
+          </p>
 
-          <div className="mt-5 flex items-center gap-3">
-            <Dots rating={album.rating} size={7} />
+          <div className="mt-6 flex items-center gap-3">
+            <Stars rating={album.rating} size={16} />
             {album.genre && (
-              <span className="rounded-full bg-[#1f1f1f] px-2.5 py-1 text-[11px] font-medium text-[#b3b3b3]/58">
+              <span className="rounded-full bg-[#161619] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.06em] text-[#86868B]">
                 {album.genre}
               </span>
             )}
           </div>
 
           {album.note && (
-            <p className="mt-7 whitespace-pre-wrap text-[14px] leading-6 text-[#b3b3b3]">
-              {album.note}
-            </p>
+            <div className="mt-12">
+              <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#52525B]">
+                Notes
+              </p>
+              <p className="mt-2 whitespace-pre-wrap text-[14px] leading-6 text-[#F4F4F5]">
+                {album.note}
+              </p>
+            </div>
           )}
 
+          {/* 破壊的操作は探した人だけが見つける */}
           <button
             onClick={() => setConfirmingDelete(true)}
-            className="mt-12 self-start text-[11px] font-semibold text-white/22 transition hover:text-[#f3727f]"
+            className="mt-16 self-start py-3 text-[13px] font-medium text-[#52525B] transition hover:text-[#E05454]"
           >
             Delete
           </button>
