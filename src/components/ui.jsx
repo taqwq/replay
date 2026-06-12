@@ -2,11 +2,11 @@ import { useState } from 'react'
 
 export function TopBar({ left, title, right, compact = false }) {
   return (
-    <header className="sticky top-0 z-30 bg-[#121212]/86 shadow-[0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-2xl">
-      <div className={`mx-auto flex max-w-[520px] items-center justify-between px-5 transition-[padding] duration-200 ${compact ? 'py-2.5' : 'py-3.5'}`}>
+    <header className="sticky top-0 z-30 bg-[#121212]/72 backdrop-blur-2xl">
+      <div className={`mx-auto flex items-center justify-between px-4 transition-[padding] duration-200 ${compact ? 'py-2.5' : 'py-3'}`}>
         <div className="flex min-w-0 flex-1 items-center justify-start">{left}</div>
         {title && (
-          <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-[12px] font-semibold text-[#b3b3b3]">
+          <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-[12px] font-semibold text-white/38">
             {title}
           </div>
         )}
@@ -19,7 +19,7 @@ export function TopBar({ left, title, right, compact = false }) {
 export function GhostButton({ children, className = '', ...props }) {
   return (
     <button
-      className={`min-h-9 rounded-full px-3.5 text-[12px] font-bold uppercase tracking-[0.12em] text-[#b3b3b3] transition hover:bg-white/[0.06] hover:text-white active:scale-[0.96] ${className}`}
+      className={`min-h-9 rounded-full px-3 text-[12px] font-semibold text-[#b3b3b3] transition hover:bg-white/[0.06] hover:text-white active:scale-[0.96] ${className}`}
       {...props}
     >
       {children}
@@ -30,7 +30,7 @@ export function GhostButton({ children, className = '', ...props }) {
 export function PrimaryButton({ children, className = '', ...props }) {
   return (
     <button
-      className={`min-h-9 rounded-full bg-white px-4 text-[12px] font-bold uppercase tracking-[0.12em] text-black shadow-[0_8px_24px_rgba(0,0,0,0.5)] transition hover:bg-[#eeeeee] active:scale-[0.96] disabled:pointer-events-none disabled:bg-[#2a2a2a] disabled:text-white/28 disabled:shadow-none ${className}`}
+      className={`min-h-9 rounded-full bg-white px-4 text-[12px] font-bold text-black shadow-[0_8px_24px_rgba(0,0,0,0.5)] transition hover:bg-[#eeeeee] active:scale-[0.96] disabled:pointer-events-none disabled:bg-[#2a2a2a] disabled:text-white/32 disabled:shadow-none ${className}`}
       {...props}
     >
       {children}
@@ -43,7 +43,28 @@ export function IconButton({ children, label, className = '', ...props }) {
     <button
       aria-label={label}
       title={label}
-      className={`grid h-9 w-9 place-items-center rounded-full bg-[#1f1f1f] text-[#b3b3b3] shadow-[inset_0_0_0_1px_rgba(124,124,124,0.28)] transition hover:bg-[#252525] hover:text-white active:scale-95 ${className}`}
+      className={`grid h-8 w-8 place-items-center rounded-full text-[#b3b3b3] transition hover:bg-white/[0.06] hover:text-white active:scale-95 ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  )
+}
+
+export function BackButton({ label = '戻る', ...props }) {
+  return (
+    <IconButton label={label} {...props}>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+        <path d="m15 18-6-6 6-6" />
+      </svg>
+    </IconButton>
+  )
+}
+
+export function HeaderAction({ children, className = '', ...props }) {
+  return (
+    <button
+      className={`min-h-8 rounded-full px-3 text-[12px] font-bold text-[#d8d8d8] transition hover:bg-white/[0.06] hover:text-white active:scale-[0.96] disabled:pointer-events-none disabled:text-white/28 ${className}`}
       {...props}
     >
       {children}

@@ -4,7 +4,7 @@ import { addAlbum, updateAlbum, getAlbumById } from '../storage'
 import { GENRES } from '../constants'
 import { searchAlbums } from '../utils/itunes'
 import { DotRating } from '../components/Dots'
-import { AlbumCover, Field, FieldGroup, GhostButton, IconButton, PrimaryButton, Spinner, TopBar } from '../components/ui'
+import { AlbumCover, BackButton, Field, FieldGroup, HeaderAction, IconButton, Spinner, TopBar } from '../components/ui'
 
 const EMPTY = { title: '', artist: '', coverUrl: '', rating: 3, genre: 'Other', note: '' }
 
@@ -25,7 +25,6 @@ export default function AlbumForm({ mode }) {
   const [searchError, setSearchError] = useState('')
   const searchRef = useRef(null)
   const canSave = form.title.trim() && form.artist.trim()
-  const hasSelectedAlbum = form.title.trim() && form.artist.trim()
 
   // 検索欄の外をタップしたら候補を閉じる
   useEffect(() => {
@@ -87,16 +86,15 @@ export default function AlbumForm({ mode }) {
   return (
     <div className="min-h-screen bg-[#121212]">
       <TopBar
-        title={mode === 'edit' ? '編集' : '追加'}
-        left={<GhostButton onClick={handleBack}>戻る</GhostButton>}
-        right={<PrimaryButton onClick={handleSave} disabled={!canSave}>保存</PrimaryButton>}
+        left={<BackButton onClick={handleBack} />}
+        right={<HeaderAction onClick={handleSave} disabled={!canSave}>Save</HeaderAction>}
       />
 
-      <main className="mx-auto max-w-[520px] px-5 pb-16 pt-5 sm:px-7 fade-up">
+      <main className="px-4 pb-16 pt-5 sm:px-5 fade-up">
 
         <div ref={searchRef} className="relative">
           {mode === 'edit' && (
-            <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#b3b3b3]/40">別のアルバムに差し替え</p>
+            <p className="mb-2 px-1 text-[11px] font-semibold text-[#b3b3b3]/44">別のアルバムに差し替え</p>
           )}
           <div className="flex min-h-12 items-center gap-3 rounded-full bg-[#1f1f1f] px-4 shadow-[rgb(18,18,18)_0_1px_0,rgba(124,124,124,0.28)_0_0_0_1px_inset] transition focus-within:bg-[#252525] focus-within:shadow-[rgb(18,18,18)_0_1px_0,rgba(255,255,255,0.42)_0_0_0_1px_inset]">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.42)" strokeWidth="2.4" aria-hidden="true">
@@ -156,14 +154,6 @@ export default function AlbumForm({ mode }) {
           <AlbumCover src={form.coverUrl} alt="cover" className="w-[196px] rounded-[12px]" />
         </div>
 
-        {hasSelectedAlbum && (
-          <div className="mx-auto mt-4 max-w-[320px] text-center fade-up">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#b3b3b3]/42">Selected</p>
-            <p className="mt-1 truncate text-[14px] font-bold text-white">{form.title}</p>
-            <p className="truncate text-[12px] text-[#b3b3b3]">{form.artist}</p>
-          </div>
-        )}
-
         <div className="mt-8 flex flex-col gap-8">
           <FieldGroup>
             <Field label="Album" error={errors.title}>
@@ -187,10 +177,20 @@ export default function AlbumForm({ mode }) {
             <Field label="Rating">
               <DotRating value={form.rating} onChange={v => set('rating', v)} />
             </Field>
+
+            <Field label="Genre">
+              <select
+                value={form.genre}
+                onChange={e => set('genre', e.target.value)}
+                className="replay-input"
+              >
+                {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </Field>
           </FieldGroup>
 
           <FieldGroup>
-            <Field label="Notes" hint="任意">
+            <Field label="Notes">
               <textarea
                 value={form.note}
                 onChange={e => set('note', e.target.value)}
@@ -205,7 +205,7 @@ export default function AlbumForm({ mode }) {
             onClick={() => setShowDetails(s => !s)}
             className="self-start rounded-full px-1 text-xs font-medium text-white/32 transition hover:text-white/58"
           >
-            {showDetails ? '詳細を閉じる' : '詳細: ジャケットURL / ジャンル'}
+            {showDetails ? 'Cover URLを閉じる' : 'Cover URL'}
           </button>
 
           {showDetails && (
@@ -218,15 +218,6 @@ export default function AlbumForm({ mode }) {
                   placeholder="https://..."
                   className="replay-input"
                 />
-              </Field>
-              <Field label="Genre">
-                <select
-                  value={form.genre}
-                  onChange={e => set('genre', e.target.value)}
-                  className="replay-input"
-                >
-                  {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
-                </select>
               </Field>
             </FieldGroup>
           )}

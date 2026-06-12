@@ -7,11 +7,13 @@
 }
 
 #root {
-  width: 100%;
+  width: min(100%, 480px);
   min-height: 100vh;
+  margin: 0 auto;
 }
 
 body {
+  min-height: 100vh;
   background-color: #121212;
   color: #ffffff;
   font-family: 'Inter', 'Helvetica Neue', Arial, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;

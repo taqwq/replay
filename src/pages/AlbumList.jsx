@@ -4,7 +4,7 @@ import { flushSync } from 'react-dom'
 import { getAlbums } from '../storage'
 import { extractColor } from '../utils/color'
 import { Dots } from '../components/Dots'
-import { AlbumCover, IconButton, PrimaryButton, TopBar } from '../components/ui'
+import { AlbumCover, HeaderAction, PrimaryButton, TopBar } from '../components/ui'
 
 // View Transitions 対応ナビゲーション
 function goTo(navigate, path) {
@@ -65,14 +65,12 @@ function AlbumCard({ album, index, cardRef, onColorReady }) {
         <div className="absolute inset-x-0 bottom-0 px-4 pb-3.5 pt-10"
           style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.2) 58%, transparent 100%)' }}
         >
-          <div className="flex items-end justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-[16px] font-bold leading-[1.15] text-white">
-                {album.title}
-              </p>
-              <p className="mt-0.5 truncate text-[13px] text-[#b3b3b3]">{album.artist}</p>
-            </div>
-            <div className="flex-shrink-0 pb-0.5">
+          <div className="min-w-0">
+            <p className="truncate text-[16px] font-bold leading-[1.15] text-white">
+              {album.title}
+            </p>
+            <p className="mt-0.5 truncate text-[13px] text-[#b3b3b3]">{album.artist}</p>
+            <div className="mt-2">
               <Dots rating={album.rating} />
             </div>
           </div>
@@ -129,11 +127,11 @@ export default function AlbumList() {
     >
       <TopBar
         compact={scrolled}
-        left={<h1 className="font-display text-[19px] font-bold text-white">replay</h1>}
-        right={<IconButton label="アルバムを追加" onClick={() => goTo(navigate, '/add')}><span className="-mt-0.5 text-[22px] font-light">+</span></IconButton>}
+        left={<h1 className="font-display text-[18px] font-bold text-white">replay</h1>}
+        right={<HeaderAction onClick={() => goTo(navigate, '/add')}><span className="mr-1 text-[14px]">+</span>Add</HeaderAction>}
       />
 
-      <main className="mx-auto flex max-w-[520px] flex-col gap-8 px-5 pb-20 pt-4 sm:px-6">
+      <main className="flex flex-col gap-8 px-4 pb-20 pt-4 sm:px-5">
         {albums.length === 0 ? (
           <div className="flex flex-col items-center gap-5 pt-20 text-center fade-up">
             <div className="aspect-square w-44 rounded-[12px] bg-[#181818] shadow-[inset_0_0_0_1px_rgba(124,124,124,0.18),0_8px_24px_rgba(0,0,0,0.5)]" />

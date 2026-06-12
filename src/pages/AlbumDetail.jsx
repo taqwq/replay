@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { getAlbumById, deleteAlbum } from '../storage'
 import { extractColor } from '../utils/color'
 import { Dots } from '../components/Dots'
-import { AlbumCover, ConfirmDialog, GhostButton, PrimaryButton, TopBar } from '../components/ui'
+import { AlbumCover, BackButton, ConfirmDialog, HeaderAction, TopBar } from '../components/ui'
 
 function goTo(navigate, path) {
   if (document.startViewTransition) {
@@ -60,12 +60,12 @@ export default function AlbumDetail() {
       />
 
       <TopBar
-        left={<GhostButton onClick={() => goTo(navigate, '/')}>戻る</GhostButton>}
-        right={<PrimaryButton onClick={() => goTo(navigate, `/album/${id}/edit`)}>編集</PrimaryButton>}
+        left={<BackButton onClick={() => goTo(navigate, '/')} />}
+        right={<HeaderAction onClick={() => goTo(navigate, `/album/${id}/edit`)}>Edit</HeaderAction>}
       />
 
-      <main className="relative z-10 mx-auto max-w-[520px] fade-up">
-        <div className="px-7 pt-4 sm:px-8">
+      <main className="relative z-10 fade-up">
+        <div className="px-5 pt-4 sm:px-6">
           <AlbumCover
             src={album.coverUrl}
             alt={album.title}
@@ -74,7 +74,7 @@ export default function AlbumDetail() {
           />
         </div>
 
-        <div className="flex flex-col px-6 pb-14 pt-6 sm:px-7">
+        <div className="flex flex-col px-5 pb-14 pt-6 sm:px-6">
           <h1 className="text-[28px] font-bold leading-[1.08] text-white">
             {album.title}
           </h1>
@@ -89,17 +89,15 @@ export default function AlbumDetail() {
             )}
           </div>
 
-          {album.note ? (
+          {album.note && (
             <p className="mt-7 whitespace-pre-wrap text-[14px] leading-6 text-[#b3b3b3]">
               {album.note}
             </p>
-          ) : (
-            <p className="mt-7 text-[12px] text-white/18">No notes</p>
           )}
 
           <button
             onClick={() => setConfirmingDelete(true)}
-            className="mt-12 self-start rounded-full bg-[#181818] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-white/24 shadow-[inset_0_0_0_1px_rgba(124,124,124,0.14)] transition hover:text-[#f3727f]"
+            className="mt-12 self-start text-[11px] font-semibold text-white/22 transition hover:text-[#f3727f]"
           >
             Delete
           </button>
